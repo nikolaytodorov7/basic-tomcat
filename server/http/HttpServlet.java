@@ -5,7 +5,7 @@ import exception.ServletException;
 import java.io.IOException;
 
 public abstract class HttpServlet {
-    public HttpServlet() {
+    protected HttpServlet() {
         init();
     }
 
@@ -25,13 +25,12 @@ public abstract class HttpServlet {
     }
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        System.out.println(this.getClass().getName());
         switch (request.getMethod()) {
             case "GET" -> doGet(request, response);
             case "POST" -> doPost(request, response);
             case "PUT" -> doPut(request, response);
             case "DELETE" -> doDelete(request, response);
-            default -> System.out.println("err"); // todo Method not allowed output socket!
+//            default -> System.out.println("Method not allowed!"); //todo ask
         }
     }
 }

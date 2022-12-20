@@ -3,7 +3,6 @@ package http;
 import dispatcher.RequestDispatcher;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.HashMap;
@@ -12,7 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class HttpServletRequest {
-    private static final Set<String> VALID_METHODS = new HashSet<>(Set.of("GET", "POST", "PUT", "DELETE"));
+    private static final Set<String> VALID_HTTP_METHODS = new HashSet<>(Set.of("GET", "POST", "PUT", "DELETE"));
+    private static final Set<String> VALID_HTTP_PROTOCOLS = new HashSet<>(Set.of(
+            "HTTP/0.9", "HTTP/1.0", "HTTP/1.1", "HTTP/2", "HTTP/3"));
     private Map<String, String> parameters = new HashMap<>();
     private Map<String, String> headers = new HashMap<>();
     private HttpSession session = null;
@@ -23,22 +24,23 @@ public class HttpServletRequest {
     private String protocol;
     private String method;
     private String path;
-    private HttpServlet servlet;
 
-    public HttpServletRequest(Socket socket) throws IOException {
+    public HttpServletRequest(Socket socket) throws Exception {
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         String line = reader.readLine();
         String[] methodPathBody = line.split(" ");
         if (methodPathBody.length != 3)
-            throw new IOException("First line must contain method, protocol and path");
+            throw new Exception("First line must contain method, protocol and path");
 
         method = methodPathBody[0];
-        if (!VALID_METHODS.contains(method))
-            throw new IOException("Invalid method!");
+        if (!VALID_HTTP_METHODS.contains(method))
+            throw new Exception("Invalid method!");
 
         path = methodPathBody[1];
         splitPath(path);
-        protocol = methodPathBody[2]; // todo validate
+        protocol = methodPathBody[2];
+        if (!VALID_HTTP_PROTOCOLS.contains(protocol))
+            throw new Exception(String.format("Invalid protocol: %s", protocol));
 
         extractHeaders();
     }
@@ -81,6 +83,10 @@ public class HttpServletRequest {
         return method;
     }
 
+    public String getProtocol() {
+        return protocol;
+    }
+
     public HttpSession getSession(boolean create) {
         if (create)
             session = new HttpSession();
@@ -96,7 +102,7 @@ public class HttpServletRequest {
         return new RequestDispatcher(path);
     }
 
-    private void extractHeaders() throws IOException {
+    private void extractHeaders() throws Exception {
         String line;
         while ((line = reader.readLine()) != null) {
             if (line.isBlank())
@@ -104,8 +110,7 @@ public class HttpServletRequest {
 
             String[] entry = line.split(": ");
             if (entry.length != 2) {
-                // todo print bad request
-                return;
+                throw new Exception(String.format("Invalid headers '%s'", line));
             }
 
             String key = entry[0];
