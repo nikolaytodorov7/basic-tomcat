@@ -1,6 +1,5 @@
 package http;
 
-import exception.ServletException;
 import parser.Configuration;
 import util.ServletContext;
 
@@ -46,17 +45,19 @@ public class HttpServer {
                     StaticContentServlet staticContentServlet = new StaticContentServlet(path);
                     staticContentServlet.service(request, response);
                     PrintWriter writer = response.getWriter();
+                    if (response.staticResponseFailed) {
+                        response.setHeader("Content-type", "text/plain");
+                        String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
+                        writer.println(msg);
+                    }
+
                     writer.flush();
                     socket.close();
                     return;
                 }
 
-                try {
-                    servlet.service(request, response);
-                } catch (ServletException | IOException e) {
-                    throw new RuntimeException(e);
-                }
-
+                response.setHeader("Content-type", "text/plain");
+                servlet.service(request, response);
                 PrintWriter writer = response.getWriter();
                 writer.flush();
                 socket.close();

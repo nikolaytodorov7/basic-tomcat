@@ -1,17 +1,33 @@
 package http;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+import util.StatusCode;
+
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 public class HttpServletResponse {
+    private static final String DEFAULT_FILE_INDEX_HTML = "index.html";
+    private static final String HTML_LINKS = "<a href=%s/%s>%s</a>";
+    private static final String HTML_LINE_BREAK = "<br/>";
+    public static final int SC_OK = 200;
+    public static final int SC_BAD_REQUEST = 400;
+    public static final int SC_NOT_FOUND = 404;
+    private static String defaultContextDir;
+
     private Map<String, String> headers = new HashMap<>();
     private PrintWriter printWriter;
     private OutputStream outputStream;
-    int status = 200;
+    private InputStream inBody;
+    private String strBody;
+    private String protocol;
+    private StatusCode statusCode;
+    private int status = SC_OK;
+    boolean staticResponseFailed = false;
 
     public HttpServletResponse(Socket socket) {
         try {
@@ -21,6 +37,100 @@ public class HttpServletResponse {
             throw new RuntimeException(e);
         }
     }
+
+    private HttpServletResponse(String protocol) {
+        this(protocol, StatusCode.OK);
+    }
+
+    private HttpServletResponse(String protocol, StatusCode statusCode) {
+        this.protocol = protocol;
+        this.statusCode = statusCode;
+    }
+
+    void prepareStaticResponse(PrintWriter writer, String protocol, String currentPath) throws IOException {
+        this.protocol = protocol;
+        defaultContextDir = getDefaultDir();
+        Path path = Path.of(defaultContextDir + currentPath);
+        File target = path.toFile();
+        if (!target.exists()) {
+            String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
+            writer.println(msg);
+            staticResponseFailed = true;
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        if (target.isDirectory())
+            prepareDirectoryResponse(path, target, sb);
+
+        prepareFileResponse(protocol, target);
+    }
+
+    private static String getDefaultDir() throws IOException {
+        File file = new File("src/webapp/DefaultServletPath");
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            return br.readLine();
+        }
+    }
+
+    private void prepareDirectoryResponse(Path path, File target, StringBuilder sb) throws IOException {
+        File[] files = target.listFiles();
+        for (File file : files) {
+            if (file.getName().equals(DEFAULT_FILE_INDEX_HTML))
+                prepareFileResponse(protocol, file);
+
+            String fileName = file.getName();
+            String formatted = String.format(HTML_LINKS, Path.of(defaultContextDir).equals(path) ? "." : path.getFileName(), fileName, fileName);
+            sb.append(formatted).append(HTML_LINE_BREAK);
+        }
+
+        sb.setLength(sb.length() - HTML_LINE_BREAK.length());
+        prepareStringResponse(protocol, sb.toString());
+    }
+
+    private void prepareStringResponse(String protocol, String httpResponse) {
+        HttpServletResponse response = new HttpServletResponse(protocol);
+        headers.put("Content-type", "text/plain");
+        response.strBody = httpResponse;
+    }
+
+    private void prepareFileResponse(String protocol, File file) throws IOException {
+        this.protocol = protocol;
+        inBody = new FileInputStream(file);
+        processHeaders(file);
+    }
+
+    private void processHeaders(File file) throws IOException {
+        String contentType = Files.probeContentType(file.toPath());
+        headers.put("Content-type", contentType);
+        String contentLength = String.valueOf(file.length());
+        headers.put("Content-length", contentLength);
+        String date = String.valueOf(LocalDateTime.now());
+        headers.put("Date", date);
+        String lastModified = String.valueOf(Files.getLastModifiedTime(file.toPath()));
+        headers.put("Last-modified", lastModified);
+    }
+
+    public void send() throws IOException {
+        writeResponse(printWriter);
+        if (strBody != null)
+            printWriter.println(strBody);
+        else
+            inBody.transferTo(outputStream);
+    }
+
+    private void writeResponse(PrintWriter writer) {
+        writer.println(protocol + " " + statusCode.CODE + " " + statusCode.MESSAGE);
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            writer.println(key + ": " + value);
+        }
+
+        writer.println();
+        writer.flush();
+    }
+
 
     public OutputStream getOutputStream() {
         return outputStream;
@@ -36,5 +146,15 @@ public class HttpServletResponse {
 
     public int getStatus() {
         return status;
+    }
+
+    public void setStatus(int statusCode) {
+        this.status = switch (statusCode) {
+            case 200 -> SC_OK;
+            case 400 -> SC_BAD_REQUEST;
+            case 404 -> SC_NOT_FOUND;
+            default ->
+                    throw new IllegalArgumentException(String.format("Illegal status code '%d' provided!", statusCode));
+        };
     }
 }

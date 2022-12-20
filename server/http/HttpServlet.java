@@ -30,7 +30,7 @@ public abstract class HttpServlet {
             case "POST" -> doPost(request, response);
             case "PUT" -> doPut(request, response);
             case "DELETE" -> doDelete(request, response);
-//            default -> System.out.println("Method not allowed!"); //todo ask
+            default -> response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 }
