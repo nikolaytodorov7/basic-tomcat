@@ -25,7 +25,7 @@ public class HttpServletRequest {
     private String method;
     private String path;
 
-    public HttpServletRequest(Socket socket) throws Exception {
+    public HttpServletRequest(Socket socket, String contextPath) throws Exception {
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         String line = reader.readLine();
         String[] methodPathBody = line.split(" ");
@@ -37,6 +37,9 @@ public class HttpServletRequest {
             throw new Exception("Invalid method!");
 
         path = methodPathBody[1];
+        if (path.startsWith(contextPath))
+            path = path.substring(contextPath.length());
+
         splitPath(path);
         protocol = methodPathBody[2];
         if (!VALID_HTTP_PROTOCOLS.contains(protocol))

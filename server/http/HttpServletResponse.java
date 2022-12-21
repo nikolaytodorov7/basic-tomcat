@@ -17,7 +17,7 @@ public class HttpServletResponse {
     public static final int SC_OK = 200;
     public static final int SC_BAD_REQUEST = 400;
     public static final int SC_NOT_FOUND = 404;
-    private static String defaultContextDir;
+    static String docBase = "";
 
     private Map<String, String> headers = new HashMap<>();
     private PrintWriter printWriter;
@@ -49,8 +49,7 @@ public class HttpServletResponse {
 
     void prepareStaticResponse(PrintWriter writer, String protocol, String currentPath) throws IOException {
         this.protocol = protocol;
-        defaultContextDir = getDefaultDir();
-        Path path = Path.of(defaultContextDir + currentPath);
+        Path path = Path.of(docBase + currentPath);
         File target = path.toFile();
         if (!target.exists()) {
             String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
@@ -66,13 +65,6 @@ public class HttpServletResponse {
         prepareFileResponse(protocol, target);
     }
 
-    private static String getDefaultDir() throws IOException {
-        File file = new File("src/webapp/DefaultServletPath");
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            return br.readLine();
-        }
-    }
-
     private void prepareDirectoryResponse(Path path, File target, StringBuilder sb) throws IOException {
         File[] files = target.listFiles();
         for (File file : files) {
@@ -80,7 +72,7 @@ public class HttpServletResponse {
                 prepareFileResponse(protocol, file);
 
             String fileName = file.getName();
-            String formatted = String.format(HTML_LINKS, Path.of(defaultContextDir).equals(path) ? "." : path.getFileName(), fileName, fileName);
+            String formatted = String.format(HTML_LINKS, Path.of(docBase).equals(path) ? "." : path.getFileName(), fileName, fileName);
             sb.append(formatted).append(HTML_LINE_BREAK);
         }
 

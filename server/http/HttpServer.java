@@ -18,10 +18,14 @@ public class HttpServer {
     private static int threadsNumber = DEFAULT_THREADS;
     private static int port = DEFAULT_PORT;
     private static ExecutorService threadPool = Executors.newFixedThreadPool(threadsNumber);
-    private static ServletContext servletService;
+    private static ServletContext servletContext;
+    private static String docBase;
+    private static String contextPath;
 
-    public static void start(Configuration configuration) throws IOException {
-        servletService = new ServletContext(configuration);
+    public static void start(Configuration configuration, String contextPath, String docBase) throws IOException {
+        HttpServer.docBase = docBase;
+        HttpServer.contextPath = contextPath;
+        servletContext = new ServletContext(configuration);
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
                 Socket socket = serverSocket.accept();
@@ -33,15 +37,16 @@ public class HttpServer {
     private static Runnable serverTask(Socket socket) {
         return () -> {
             try {
-                HttpServletRequest request = new HttpServletRequest(socket);
+                HttpServletRequest request = new HttpServletRequest(socket, contextPath);
                 if (request.getPathInfo() != null && request.getPathInfo().equals("/favicon.ico"))
                     return; // Skips /favicon.ico.
 
                 HttpServletResponse response = new HttpServletResponse(socket);
 
                 String path = buildPath(request);
-                HttpServlet servlet = servletService.getServlet(path);
+                HttpServlet servlet = servletContext.getServlet(path);
                 if (servlet == null) {
+                    HttpServletResponse.docBase = docBase;
                     StaticContentServlet staticContentServlet = new StaticContentServlet(path);
                     staticContentServlet.service(request, response);
                     PrintWriter writer = response.getWriter();
