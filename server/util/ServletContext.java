@@ -1,5 +1,6 @@
 package util;
 
+import http.RequestDispatcher;
 import http.HttpServlet;
 import parser.Configuration;
 import parser.ServletMapping;
@@ -12,6 +13,10 @@ public class ServletContext {
 
     public ServletContext(Configuration configuration) {
         this.configuration = configuration;
+    }
+
+    public RequestDispatcher getRequestDispatcher(String path) {
+        return new RequestDispatcher(path);
     }
 
     public HttpServlet getServlet(String path) {

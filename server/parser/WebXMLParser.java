@@ -16,7 +16,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 public class WebXMLParser {
-    private Configuration configuration = new Configuration();
+    private Configuration configuration = Configuration.getConfiguration();
     private Document document;
     private boolean parsed = false;
 
@@ -53,10 +53,6 @@ public class WebXMLParser {
         parseServlets(servletNodes);
         NodeList servletMappingNodes = document.getElementsByTagName("servlet-mapping");
         parseServletMappings(servletMappingNodes);
-    }
-
-    public Configuration getConfiguration() {
-        return configuration;
     }
 
     private void parseFilters(NodeList nodes) {

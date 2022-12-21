@@ -42,29 +42,12 @@ public class HttpServer {
                     return; // Skips /favicon.ico.
 
                 HttpServletResponse response = new HttpServletResponse(socket);
+                HttpServletResponse.docBase = docBase;
 
                 String path = buildPath(request);
-                HttpServlet servlet = servletContext.getServlet(path);
-                if (servlet == null) {
-                    HttpServletResponse.docBase = docBase;
-                    StaticContentServlet staticContentServlet = new StaticContentServlet(path);
-                    staticContentServlet.service(request, response);
-                    PrintWriter writer = response.getWriter();
-                    if (response.staticResponseFailed) {
-                        response.setHeader("Content-type", "text/plain");
-                        String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
-                        writer.println(msg);
-                    }
-
-                    writer.flush();
-                    socket.close();
-                    return;
-                }
-
-                response.setHeader("Content-type", "text/plain");
-                servlet.service(request, response);
-                PrintWriter writer = response.getWriter();
-                writer.flush();
+                RequestDispatcher requestDispatcher = new RequestDispatcher(path);
+                requestDispatcher.forward(request, response);
+                response.getWriter().flush();
                 socket.close();
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage(), e);

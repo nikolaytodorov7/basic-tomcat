@@ -47,13 +47,12 @@ public class HttpServletResponse {
         this.statusCode = statusCode;
     }
 
-    void prepareStaticResponse(PrintWriter writer, String protocol, String currentPath) throws IOException {
+    void prepareStaticResponse(String protocol, String currentPath) throws IOException {
         this.protocol = protocol;
         Path path = Path.of(docBase + currentPath);
         File target = path.toFile();
         if (!target.exists()) {
-            String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
-            writer.println(msg);
+            sendError(String.valueOf(path));
             staticResponseFailed = true;
             return;
         }
@@ -148,5 +147,12 @@ public class HttpServletResponse {
             default ->
                     throw new IllegalArgumentException(String.format("Illegal status code '%d' provided!", statusCode));
         };
+    }
+
+    public void sendError(String path) {
+        setHeader("Content-type", "text/plain");
+        String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
+        printWriter.println(msg);
+        printWriter.flush();
     }
 }

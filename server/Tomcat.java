@@ -16,7 +16,7 @@ public class Tomcat {
     public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
         WebXMLParser parser = new WebXMLParser();
         parser.parse("src\\webapp\\web.xml");
-        Configuration configuration = parser.getConfiguration();
+        Configuration configuration = Configuration.getConfiguration();
         startServer(configuration);
     }
 

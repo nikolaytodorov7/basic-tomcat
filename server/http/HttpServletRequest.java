@@ -1,7 +1,5 @@
 package http;
 
-import dispatcher.RequestDispatcher;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -23,7 +21,7 @@ public class HttpServletRequest {
     private String pathInfo = null;
     private String protocol;
     private String method;
-    private String path;
+    String path;
 
     public HttpServletRequest(Socket socket, String contextPath) throws Exception {
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -48,7 +46,7 @@ public class HttpServletRequest {
         extractHeaders();
     }
 
-    private void splitPath(String path) {
+    void splitPath(String path) {
         String[] split = path.split("/");
         if (split.length < 2)
             return;
