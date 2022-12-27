@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="app.server.http://maven.apache.org/POM/4.0.0" xmlns:xsi="app.server.http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="app.server.http://maven.apache.org/POM/4.0.0 app.server.http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <properties>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
+    </properties>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>app</groupId>
+    <artifactId>tomcat-clone</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>tomcat-clone</name>
+    <url>app.server.http://maven.apache.org</url>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <modules>
+        <module>webapp</module>
+        <module>server</module>
+    </modules>
+</project>
