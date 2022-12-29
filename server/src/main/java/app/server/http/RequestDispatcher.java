@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class RequestDispatcher {
     private String path;
     private HttpServlet servlet;
-    private FilterChain filterChain = getFilterChain();
+    private FilterChain filterChain;
 
     public RequestDispatcher(String path) {
         this.path = path;

@@ -1,7 +1,15 @@
 package app.server.http;
 
 import app.server.parser.Configuration;
+import app.server.parser.WebXMLParser;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -20,7 +28,12 @@ public class HttpServer {
     private static String docBase;
     private static String contextPath;
 
-    public static void start(Configuration configuration) throws IOException {
+    public static void start() throws IOException {
+        setDocAndContext();
+        WebXMLParser parser = new WebXMLParser(docBase);
+        parser.parse();
+        Configuration configuration = Configuration.getConfiguration();
+
         servletContext = new ServletContext(configuration);
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
@@ -41,7 +54,6 @@ public class HttpServer {
                 HttpServletResponse.docBase = docBase;
 
                 String path = buildPath(request);
-
                 RequestDispatcher requestDispatcher = servletContext.getRequestDispatcher(path);
                 requestDispatcher.forward(request, response);
                 response.getWriter().flush();
@@ -50,5 +62,28 @@ public class HttpServer {
                 throw new RuntimeException(e.getMessage(), e);
             }
         };
+    }
+
+    private static String getContextPath(Document document) {
+        Node node = document.getElementsByTagName("Context").item(0);
+        Element element = (Element) node;
+        return '/' + element.getAttribute("path");
+    }
+
+    private static String getDocBase(Document document) {
+        Node node = document.getElementsByTagName("Context").item(0);
+        Element element = (Element) node;
+        return '/' + element.getAttribute("docBase");
+    }
+
+    private static void setDocAndContext() throws IOException {
+        try {
+            DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document document = documentBuilder.parse("C:\\Work\\IdeaProjects\\tomcat-clone\\server\\src\\main\\webapp\\WEB-INF\\server.xml");
+            docBase = getDocBase(document);
+            contextPath = getContextPath(document);
+        } catch (ParserConfigurationException | SAXException e) {
+            throw new RuntimeException("No server XML Found!");
+        }
     }
 }

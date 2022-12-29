@@ -18,24 +18,59 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public class WebXMLParser {
     private Configuration configuration = Configuration.getConfiguration();
     private Document document;
     private boolean parsed = false;
     private URLClassLoader loader;
+    private String docBase;
 
-    public WebXMLParser(String classesPath) {
-        File dir = new File(classesPath);
-        try {
-            URL url = dir.toURI().toURL();
-            loader = URLClassLoader.newInstance(new URL[]{url});
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(String.format("Invalid path provided! '%s'", classesPath));
-        }
+    public WebXMLParser(String docBase) {
+        this.docBase = docBase;
+        createClassLoader();
     }
 
-    public void parse(String path) {
+    private void createClassLoader() {
+        String classesPath = docBase + "\\webapp\\target\\webapp-1.0-SNAPSHOT\\WEB-INF\\classes";
+        String resourcesPath = docBase + "\\webapp\\src\\resources";
+        String libPath = docBase + "\\webapp\\target\\webapp-1.0-SNAPSHOT\\WEB-INF\\lib";
+        URL[] urls = getUrls(classesPath, resourcesPath, libPath);
+        loader = URLClassLoader.newInstance(urls);
+    }
+
+    public URL[] getUrls(String classesPath, String resourcesPath, String libPath) {
+        File dir = new File(classesPath);
+        List<URL> urls = new ArrayList<>();
+        try {
+            urls.add(dir.toURI().toURL());
+            urls.add(new File(resourcesPath).toURI().toURL());
+            File file = new File(libPath);
+            Arrays.stream(Objects.requireNonNull(file.listFiles())).forEach((t) -> {
+                try {
+                    urls.add(t.toURI().toURL());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e); //todo
+                }
+            });
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+
+        URL[] urlArr = new URL[urls.size()];
+        for (int i = 0; i < urls.size(); i++) {
+            urlArr[i] = urls.get(i);
+        }
+
+        return urlArr;
+    }
+
+    public void parse() {
+        String path = docBase + "\\webapp\\target\\webapp-1.0-SNAPSHOT\\WEB-INF\\web.xml";
         if (parsed) {
             String msg = String.format("Xml file '%s' has already been parsed!", path);
             throw new RuntimeException(msg);
@@ -111,6 +146,8 @@ public class WebXMLParser {
             if (urlPattern == null && servletName == null)
                 throw new IllegalArgumentException("Filter must have url pattern or servlet name!");
 
+            System.out.println(urlPattern);
+            System.out.println(filterName);
             configuration.addFilterMapping(filterName, urlPattern, servletName);
         }
     }
@@ -130,7 +167,7 @@ public class WebXMLParser {
                 throw new IllegalArgumentException("Servlet class not found!");
 
             try {
-                Class<?> clazz = Class.forName(servletClass);
+                Class<?> clazz = loader.loadClass(servletClass);
                 Constructor<?> constructor = clazz.getConstructor();
                 HttpServlet servlet = (HttpServlet) constructor.newInstance();
                 configuration.servlets.put(servletName, servlet);

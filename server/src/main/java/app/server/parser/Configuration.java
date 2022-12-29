@@ -19,11 +19,9 @@ public class Configuration {
     }
 
     public void addFilterMapping(String filterName, String urlPattern, String servletName) {
-        if ((urlPattern == null || urlPattern.equals("")) && ((servletName == null || servletName.equals(""))))
-            return;
-
         FilterMapping filterMapping = new FilterMapping(filterName, urlPattern, servletName);
-        filterMappings.put(filterName, filterMapping);
+//        filterMappings.put(filterName, filterMapping);
+        filterMappings.put(urlPattern, filterMapping);
     }
 
     public void addServletMapping(String servletName, String urlPattern) {
