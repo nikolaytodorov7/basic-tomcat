@@ -50,13 +50,12 @@ public class WebXMLParser {
             urls.add(dir.toURI().toURL());
             urls.add(new File(resourcesPath).toURI().toURL());
             File file = new File(libPath);
-            Arrays.stream(Objects.requireNonNull(file.listFiles())).forEach((t) -> {
-                try {
-                    urls.add(t.toURI().toURL());
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e); //todo
+            if (file.exists() && file.isDirectory()) {
+                File[] files = file.listFiles();
+                for (File f : files) {
+                    urls.add(f.toURI().toURL());
                 }
-            });
+            }
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

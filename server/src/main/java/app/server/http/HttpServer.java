@@ -13,10 +13,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static app.server.util.ServletUtils.buildPath;
 
 public class HttpServer {
     private static final int DEFAULT_THREADS = 5;
@@ -46,20 +45,14 @@ public class HttpServer {
     private static Runnable serverTask(Socket socket) {
         return () -> {
             try {
-                HttpServletRequest request = new HttpServletRequest(socket.getInputStream(), contextPath);
+                HttpServletRequest request = new HttpServletRequest(socket.getInputStream(), contextPath, servletContext);
                 if (request.getPathInfo() != null && request.getPathInfo().equals("/favicon.ico"))
                     return; // Skips /favicon.ico.
 
-                HttpServletResponse response = new HttpServletResponse(socket);
-                response.setDocBase(docBase);
-                HttpSession session = request.getSession();
-                if (session != null) {
-                    Cookie sessionCookie = new Cookie("Session", session.sessionId);
-                    response.addCookie(sessionCookie);
-                }
+                HttpServletResponse response = new HttpServletResponse(socket, docBase);
+                Arrays.stream(request.getCookies()).forEach(response::addCookie);
 
-                String path = buildPath(request);
-                RequestDispatcher requestDispatcher = servletContext.getRequestDispatcher(path);
+                RequestDispatcher requestDispatcher = servletContext.getRequestDispatcher(request.path);
                 requestDispatcher.forward(request, response);
                 response.getWriter().flush();
                 socket.close();
@@ -78,7 +71,7 @@ public class HttpServer {
     private static String getDocBase(Document document) {
         Node node = document.getElementsByTagName("Context").item(0);
         Element element = (Element) node;
-        return '/' + element.getAttribute("docBase");
+        return element.getAttribute("docBase");
     }
 
     private static void setDocAndContext() throws IOException {

@@ -12,17 +12,19 @@ public class HttpServletRequest {
 
     private Map<String, String> parameters = new HashMap<>();
     private Map<String, String> headers = new HashMap<>();
-    private List<Cookie> cookiesList = new ArrayList<>();
+    private ServletContext servletContext;
     private HttpSession session = null;
-    private BufferedReader reader;
     private String servletPath = null;
     private String queryString = null;
     private String pathInfo = null;
+    private BufferedReader reader;
     private String protocol;
     private String method;
+    private Cookie[] cookies;
     String path;
 
-    public HttpServletRequest(InputStream inputStream, String contextPath) throws Exception {
+    public HttpServletRequest(InputStream inputStream, String contextPath, ServletContext servletContext) throws Exception {
+        this.servletContext = servletContext;
         reader = new BufferedReader(new InputStreamReader(inputStream));
         String line = reader.readLine();
         String[] methodPathBody = line.split(" ");
@@ -47,22 +49,21 @@ public class HttpServletRequest {
     }
 
     private void processCookies() {
-        String cookies = headers.get("Cookie");
-        if (cookies == null)
-            return;
-
-        if (cookies.equals("Session"))
-            session = HttpSession.sessions.get(cookies);
-
         String cookieHeader = headers.get("Cookie");
-        String[] splitCookies = cookieHeader.split("; ");
+        if (cookieHeader == null) {
+            cookies = new Cookie[0];
+            return;
+        }
 
+        List<Cookie> cookiesList = new ArrayList<>();
+        String[] splitCookies = cookieHeader.split(";");
         for (String stringCookie : splitCookies) {
+            stringCookie = stringCookie.trim();
             String[] splitCookie = stringCookie.split("=");
             String cookieName = splitCookie[0];
             String cookieValue = splitCookie[1];
             if (cookieName.equals("Session")) {
-                session = HttpSession.sessions.get(cookieValue);
+                session = servletContext.sessions.get(cookieValue);
                 if (session == null)
                     continue;
             }
@@ -70,6 +71,8 @@ public class HttpServletRequest {
             Cookie cookie = new Cookie(cookieName, cookieValue);
             cookiesList.add(cookie);
         }
+
+        cookies = cookiesList.toArray(new Cookie[0]);
     }
 
     void splitPath(String path) {
@@ -116,19 +119,19 @@ public class HttpServletRequest {
     }
 
     public Cookie[] getCookies() {
-        return cookiesList.toArray(new Cookie[0]);
+        return cookies;
     }
 
     public HttpSession getSession() {
         if (session == null)
-            session = new HttpSession();
+            session = new HttpSession(servletContext);
 
         return session;
     }
 
     public HttpSession getSession(boolean create) {
         if (create)
-            session = new HttpSession();
+            session = new HttpSession(servletContext);
 
         return session;
     }

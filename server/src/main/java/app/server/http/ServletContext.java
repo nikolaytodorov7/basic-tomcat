@@ -3,11 +3,13 @@ package app.server.http;
 import app.server.parser.Configuration;
 import app.server.parser.ServletMapping;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 public class ServletContext {
     private Configuration configuration;
+    Map<String, HttpSession> sessions = new HashMap<>();
 
     public ServletContext(Configuration configuration) {
         this.configuration = configuration;
@@ -39,7 +41,7 @@ public class ServletContext {
                 Pattern starPattern;
                 if (index + 1 < servletPath.length()) {
                     String afterStar = servletPath.substring(index + 1);
-                starPattern = Pattern.compile(beforeStar + "(.*?)" + afterStar);
+                    starPattern = Pattern.compile(beforeStar + "(.*?)" + afterStar);
                 } else
                     starPattern = Pattern.compile(beforeStar + "(.*?)");
 

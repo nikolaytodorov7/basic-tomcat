@@ -17,9 +17,9 @@ public class HttpServletResponse {
     public static final int SC_OK = 200;
     public static final int SC_BAD_REQUEST = 400;
     public static final int SC_NOT_FOUND = 404;
-    private static String docBase = "";
 
     private Map<String, String> headers = new HashMap<>();
+    private String docBase;
     private PrintWriter printWriter;
     private OutputStream outputStream;
     private InputStream inBody;
@@ -29,7 +29,8 @@ public class HttpServletResponse {
     private int status = SC_OK;
     boolean staticResponseFailed = false;
 
-    public HttpServletResponse(Socket socket) {
+    public HttpServletResponse(Socket socket, String docBase) {
+        this.docBase = docBase;
         try {
             outputStream = socket.getOutputStream();
             printWriter = new PrintWriter(outputStream);
@@ -39,12 +40,13 @@ public class HttpServletResponse {
     }
 
     private HttpServletResponse(String protocol) {
-        this(protocol, StatusCode.OK);
+        this(protocol, StatusCode.OK, "");
     }
 
-    private HttpServletResponse(String protocol, StatusCode statusCode) {
+    private HttpServletResponse(String protocol, StatusCode statusCode, String docBase) {
         this.protocol = protocol;
         this.statusCode = statusCode;
+        this.docBase = docBase;
     }
 
     void prepareStaticResponse(String protocol, String currentPath) throws IOException {
@@ -122,7 +124,6 @@ public class HttpServletResponse {
         writer.flush();
     }
 
-
     public OutputStream getOutputStream() {
         return outputStream;
     }
@@ -143,6 +144,14 @@ public class HttpServletResponse {
         return status;
     }
 
+    public void addCookie(Cookie cookie) {
+        StringBuilder cookieBuilder = new StringBuilder();
+        String key = "Set-Cookie";
+        cookieBuilder.append(cookie.getName()).append('=').append(cookie.getValue());
+        cookie.attributes.forEach((k, v) -> cookieBuilder.append(" ;").append(k).append('=').append(v));
+        headers.put(key, cookieBuilder.toString());
+    }
+
     public void setStatus(int statusCode) {
         this.status = switch (statusCode) {
             case 200 -> SC_OK;
@@ -158,13 +167,5 @@ public class HttpServletResponse {
         String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
         printWriter.println(msg);
         printWriter.flush();
-    }
-
-    public void addCookie(Cookie cookie) {
-        StringBuilder cookieBuilder = new StringBuilder();
-        String key = "Set-Cookie";
-        cookieBuilder.append(cookie.getName()).append('=').append(cookie.getValue());
-
-        headers.put("Set-Cookie", cookie.getName() + "=" + cookie.getValue());
     }
 }

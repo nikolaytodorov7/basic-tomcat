@@ -6,7 +6,7 @@ import java.util.Map;
 public class Cookie {
     private final String name;
     private String value;
-    private Map<String, String> attributes = new HashMap<>();
+    Map<String, String> attributes = new HashMap<>();
 
     public Cookie(String name, String value) {
         if (name == null || name.isEmpty())

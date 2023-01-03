@@ -8,14 +8,16 @@ import java.util.Map;
 import java.util.Random;
 
 public class HttpSession {
-    static Map<String, HttpSession> sessions = new HashMap<>();
-
-    String sessionId;
+    private String sessionId;
     private Map<String, Object> attributes = new HashMap<>();
+    private ServletContext servletContext;
+    private long creationTime;
 
-    public HttpSession() {
+    public HttpSession(ServletContext servletContext) {
+        this.servletContext = servletContext;
         sessionId = generateSessionId();
-        sessions.put(sessionId, this);
+        servletContext.sessions.put(sessionId, this);
+        creationTime = System.currentTimeMillis();
     }
 
     public Object getAttribute(String attribute) {
@@ -24,6 +26,22 @@ public class HttpSession {
 
     public void setAttribute(String user, Object value) {
         attributes.put(user, value);
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
+    public String getId() {
+        return sessionId;
+    }
+
+    public ServletContext getServletContext() {
+        return servletContext;
+    }
+
+    public void invalidate() {
+        servletContext.sessions.remove(sessionId);
     }
 
     private String generateSessionId() {
@@ -44,7 +62,7 @@ public class HttpSession {
         }
 
         String sessionId = hexString.toString();
-        if (sessions.containsKey(sessionId))
+        if (servletContext.sessions.containsKey(sessionId))
             sessionId = generateSessionId();
 
         return sessionId;
