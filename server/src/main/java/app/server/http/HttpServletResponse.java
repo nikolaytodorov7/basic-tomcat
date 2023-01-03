@@ -17,7 +17,7 @@ public class HttpServletResponse {
     public static final int SC_OK = 200;
     public static final int SC_BAD_REQUEST = 400;
     public static final int SC_NOT_FOUND = 404;
-    static String docBase = "";
+    private static String docBase = "";
 
     private Map<String, String> headers = new HashMap<>();
     private PrintWriter printWriter;
@@ -135,6 +135,10 @@ public class HttpServletResponse {
         headers.put(name, value);
     }
 
+    public void setDocBase(String base) {
+        docBase = base;
+    }
+
     public int getStatus() {
         return status;
     }
@@ -154,5 +158,13 @@ public class HttpServletResponse {
         String msg = String.format("HTTP Status 404 – Not Found\nThe requested resource [%s] is not available", path);
         printWriter.println(msg);
         printWriter.flush();
+    }
+
+    public void addCookie(Cookie cookie) {
+        StringBuilder cookieBuilder = new StringBuilder();
+        String key = "Set-Cookie";
+        cookieBuilder.append(cookie.getName()).append('=').append(cookie.getValue());
+
+        headers.put("Set-Cookie", cookie.getName() + "=" + cookie.getValue());
     }
 }

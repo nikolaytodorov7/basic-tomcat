@@ -51,7 +51,12 @@ public class HttpServer {
                     return; // Skips /favicon.ico.
 
                 HttpServletResponse response = new HttpServletResponse(socket);
-                HttpServletResponse.docBase = docBase;
+                response.setDocBase(docBase);
+                HttpSession session = request.getSession();
+                if (session != null) {
+                    Cookie sessionCookie = new Cookie("Session", session.sessionId);
+                    response.addCookie(sessionCookie);
+                }
 
                 String path = buildPath(request);
                 RequestDispatcher requestDispatcher = servletContext.getRequestDispatcher(path);

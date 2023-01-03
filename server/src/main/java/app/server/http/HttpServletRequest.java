@@ -3,17 +3,16 @@ package app.server.http;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HttpServletRequest {
     private static final Set<String> VALID_HTTP_METHODS = new HashSet<>(Set.of("GET", "POST", "PUT", "DELETE"));
     private static final Set<String> VALID_HTTP_PROTOCOLS = new HashSet<>(Set.of(
             "HTTP/0.9", "HTTP/1.0", "HTTP/1.1", "HTTP/2", "HTTP/3"));
+
     private Map<String, String> parameters = new HashMap<>();
     private Map<String, String> headers = new HashMap<>();
+    private List<Cookie> cookiesList = new ArrayList<>();
     private HttpSession session = null;
     private BufferedReader reader;
     private String servletPath = null;
@@ -44,6 +43,33 @@ public class HttpServletRequest {
             throw new Exception(String.format("Invalid protocol: %s", protocol));
 
         extractHeaders();
+        processCookies();
+    }
+
+    private void processCookies() {
+        String cookies = headers.get("Cookie");
+        if (cookies == null)
+            return;
+
+        if (cookies.equals("Session"))
+            session = HttpSession.sessions.get(cookies);
+
+        String cookieHeader = headers.get("Cookie");
+        String[] splitCookies = cookieHeader.split("; ");
+
+        for (String stringCookie : splitCookies) {
+            String[] splitCookie = stringCookie.split("=");
+            String cookieName = splitCookie[0];
+            String cookieValue = splitCookie[1];
+            if (cookieName.equals("Session")) {
+                session = HttpSession.sessions.get(cookieValue);
+                if (session == null)
+                    continue;
+            }
+
+            Cookie cookie = new Cookie(cookieName, cookieValue);
+            cookiesList.add(cookie);
+        }
     }
 
     void splitPath(String path) {
@@ -51,7 +77,8 @@ public class HttpServletRequest {
         if (split.length < 2)
             return;
 
-        servletPath = '/' + split[1];
+        String[] splitQuery = split[1].split("\\?");
+        servletPath = '/' + splitQuery[0];
         StringBuilder buildPathInfo = new StringBuilder();
         for (int i = 2; i < split.length; i++) {
             buildPathInfo.append('/').append(split[i]);
@@ -88,6 +115,17 @@ public class HttpServletRequest {
         return protocol;
     }
 
+    public Cookie[] getCookies() {
+        return cookiesList.toArray(new Cookie[0]);
+    }
+
+    public HttpSession getSession() {
+        if (session == null)
+            session = new HttpSession();
+
+        return session;
+    }
+
     public HttpSession getSession(boolean create) {
         if (create)
             session = new HttpSession();
@@ -105,10 +143,7 @@ public class HttpServletRequest {
 
     private void extractHeaders() throws Exception {
         String line;
-        while ((line = reader.readLine()) != null) {
-            if (line.isBlank())
-                break;
-
+        while ((line = reader.readLine()) != null && !line.isBlank()) {
             String[] entry = line.split(": ");
             if (entry.length != 2) {
                 throw new Exception(String.format("Invalid headers '%s'", line));

@@ -5,6 +5,7 @@ C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\exception\Serv
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\parser\WebXMLParser.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\HttpSession.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\FilterChain.java
+C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\Cookie.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\HttpServlet.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\HttpServletRequest.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\parser\FilterMapping.java
@@ -15,5 +16,4 @@ C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\HttpServl
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\RequestDispatcher.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\HttpServer.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\parser\ServletMapping.java
-C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\http\HttpResponse.java
 C:\Work\IdeaProjects\tomcat-clone\server\src\main\java\app\server\parser\Configuration.java

@@ -22,7 +22,6 @@ public class RequestDispatcher {
     }
 
     public void forward(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        FilterChain filterChain = getFilterChain();
         filterChain.doFilter(request, response);
         if (servlet == null) {
             doStaticContextServlet(request, response);

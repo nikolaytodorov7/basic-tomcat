@@ -146,8 +146,6 @@ public class WebXMLParser {
             if (urlPattern == null && servletName == null)
                 throw new IllegalArgumentException("Filter must have url pattern or servlet name!");
 
-            System.out.println(urlPattern);
-            System.out.println(filterName);
             configuration.addFilterMapping(filterName, urlPattern, servletName);
         }
     }

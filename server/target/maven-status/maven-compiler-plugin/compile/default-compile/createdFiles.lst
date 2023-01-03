@@ -3,9 +3,9 @@ app\server\http\StaticContentServlet.class
 app\server\parser\ServletMapping.class
 app\server\util\StatusCode.class
 app\server\http\HttpServletResponse.class
-app\server\http\HttpResponse.class
 app\server\http\FilterChain.class
 app\server\http\HttpSession.class
+app\server\http\Cookie.class
 app\server\http\HttpServletRequest.class
 app\server\parser\WebXMLParser.class
 app\server\parser\Configuration.class
