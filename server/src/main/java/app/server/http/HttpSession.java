@@ -12,6 +12,7 @@ public class HttpSession {
     private Map<String, Object> attributes = new HashMap<>();
     private ServletContext servletContext;
     private long creationTime;
+    boolean isNew = true;
 
     public HttpSession(ServletContext servletContext) {
         this.servletContext = servletContext;
@@ -56,15 +57,19 @@ public class HttpSession {
 
         md.update(String.valueOf(randomNumber).getBytes(StandardCharsets.UTF_8));
         byte[] digest = md.digest();
+        String sessionId = byteArrayToHexString(digest);
+        if (servletContext.sessions.containsKey(sessionId))
+            sessionId = generateSessionId();
+
+        return sessionId;
+    }
+
+    private static String byteArrayToHexString(byte[] digest) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : digest) {
             hexString.append(Integer.toHexString(0xFF & b));
         }
 
-        String sessionId = hexString.toString();
-        if (servletContext.sessions.containsKey(sessionId))
-            sessionId = generateSessionId();
-
-        return sessionId;
+        return hexString.toString();
     }
 }

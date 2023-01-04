@@ -12,7 +12,7 @@ public class HttpServletRequest {
 
     private Map<String, String> parameters = new HashMap<>();
     private Map<String, String> headers = new HashMap<>();
-    private ServletContext servletContext;
+    ServletContext servletContext;
     private HttpSession session = null;
     private String servletPath = null;
     private String queryString = null;
@@ -48,7 +48,7 @@ public class HttpServletRequest {
         processCookies();
     }
 
-    private void processCookies() {
+    private void processCookies() { //todo check if we must send cookie each response or only first
         String cookieHeader = headers.get("Cookie");
         if (cookieHeader == null) {
             cookies = new Cookie[0];

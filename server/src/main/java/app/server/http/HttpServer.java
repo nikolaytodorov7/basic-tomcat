@@ -37,29 +37,9 @@ public class HttpServer {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
                 Socket socket = serverSocket.accept();
-                threadPool.submit(serverTask(socket));
+                threadPool.submit(ServerTask.runTask(socket, contextPath, docBase, servletContext));
             }
         }
-    }
-
-    private static Runnable serverTask(Socket socket) {
-        return () -> {
-            try {
-                HttpServletRequest request = new HttpServletRequest(socket.getInputStream(), contextPath, servletContext);
-                if (request.getPathInfo() != null && request.getPathInfo().equals("/favicon.ico"))
-                    return; // Skips /favicon.ico.
-
-                HttpServletResponse response = new HttpServletResponse(socket, docBase);
-                Arrays.stream(request.getCookies()).forEach(response::addCookie);
-
-                RequestDispatcher requestDispatcher = servletContext.getRequestDispatcher(request.path);
-                requestDispatcher.forward(request, response);
-                response.getWriter().flush();
-                socket.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        };
     }
 
     private static String getContextPath(Document document) {

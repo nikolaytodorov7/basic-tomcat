@@ -29,7 +29,7 @@ public class HttpServletResponse {
     private int status = SC_OK;
     boolean staticResponseFailed = false;
 
-    public HttpServletResponse(Socket socket, String docBase) {
+    public HttpServletResponse(Socket socket, String docBase, HttpServletRequest request) {
         this.docBase = docBase;
         try {
             outputStream = socket.getOutputStream();
@@ -37,6 +37,11 @@ public class HttpServletResponse {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        addCookies(request.getCookies());
+        HttpSession session = request.getSession();
+        if (session != null && session.isNew)
+            addCookie(new Cookie("Session", session.getId()));
     }
 
     private HttpServletResponse(String protocol) {
@@ -145,11 +150,19 @@ public class HttpServletResponse {
     }
 
     public void addCookie(Cookie cookie) {
-        StringBuilder cookieBuilder = new StringBuilder();
-        String key = "Set-Cookie";
-        cookieBuilder.append(cookie.getName()).append('=').append(cookie.getValue());
-        cookie.attributes.forEach((k, v) -> cookieBuilder.append(" ;").append(k).append('=').append(v));
-        headers.put(key, cookieBuilder.toString());
+        String setCookie = headers.get("Set-Cookie");
+        if (setCookie == null) {
+            headers.put("Set-Cookie", cookie.toString());
+            return;
+        }
+
+        headers.put("Set-Cookie", setCookie + "\n" + cookie.toString());
+    }
+
+    public void addCookies(Cookie[] cookies) {
+        for (Cookie cookie : cookies) {
+            addCookie(cookie);
+        }
     }
 
     public void setStatus(int statusCode) {

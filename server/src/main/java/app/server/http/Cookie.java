@@ -68,4 +68,11 @@ public class Cookie {
     public boolean isHttpOnly() {
         return Boolean.parseBoolean(attributes.get("HttpOnly"));
     }
+
+    public String toString() {
+        StringBuilder cookieBuilder = new StringBuilder();
+        cookieBuilder.append(name).append('=').append(value);
+        attributes.forEach((k, v) -> cookieBuilder.append(";").append(k).append('=').append(v));
+        return cookieBuilder.toString();
+    }
 }
